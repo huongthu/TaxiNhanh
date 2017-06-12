@@ -1,25 +1,35 @@
-package com.example.thu.taxinhanh;
+package com.example.thu.fragments;
+
 
 import android.content.Context;
-import android.support.v7.app.AppCompatActivity;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.example.thu.taxinhanh.R;
 import com.example.thu.utils.BookHistory;
 
-import static com.example.thu.taxinhanh.ChatActivity.MessageType.SELF_MESSAGE;
+/**
+ * Created by thu on 6/12/2017.
+ */
 
-public class HistoryActivity extends AppCompatActivity {
+public class HistoryFragment extends Fragment {
+    View root = null;
+    public static android.support.v4.app.Fragment newInstance(Context context) {
+        BookFragment f = new BookFragment();
+        return f;
+    }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_history);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        root = (ViewGroup) inflater.inflate(R.layout.activity_history, null);
 
         BookHistory history = new BookHistory("This is a pick up location bla bla bla",
                 "This is a drop off location bla bla bla",
@@ -28,14 +38,16 @@ public class HistoryActivity extends AppCompatActivity {
         for (int i = 0; i < 10; i++) {
             addHistoryRow(history);
         }
+
+        return root;
     }
 
-    private void addHistoryRow(BookHistory history) {
+    public void addHistoryRow(BookHistory history) {
         if (null == history) {
             return;
         }
 
-        LayoutInflater inflater = (LayoutInflater) getApplicationContext().getSystemService
+        LayoutInflater inflater = (LayoutInflater)  root.getContext().getApplicationContext().getSystemService
                 (Context.LAYOUT_INFLATER_SERVICE);
 
         View viewHistory = inflater.inflate(R.layout.layout_history_row, null);
@@ -62,11 +74,11 @@ public class HistoryActivity extends AppCompatActivity {
         tvHistoryDriver.setSelected(true);
 
         //find linearLayout and put history row to this
-        LinearLayout llChatContent = (LinearLayout)findViewById(R.id.llHistoryContent);
+        LinearLayout llChatContent = (LinearLayout)root.findViewById(R.id.llHistoryContent);
         llChatContent.addView(viewHistory);
 
         //scroll to end - NOT WORKING
-        ScrollView svChatContent = (ScrollView)findViewById(R.id.svHistoryContent);
+        ScrollView svChatContent = (ScrollView)root.findViewById(R.id.svHistoryContent);
         svChatContent.fullScroll(View.FOCUS_DOWN);
     }
 }

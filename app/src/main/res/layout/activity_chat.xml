@@ -9,13 +9,13 @@
     <ScrollView
         android:id="@+id/svChatContent"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_weight="20"
         android:padding="10dp">
         <LinearLayout
             android:id="@+id/llChatContent"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="vertical">
         </LinearLayout>
     </ScrollView>

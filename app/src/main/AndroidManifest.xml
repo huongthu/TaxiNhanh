@@ -23,9 +23,6 @@
             android:name=".LoginActivity"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
         <activity android:name=".RegisterActivity" />
-        <activity android:name=".BookActivity" />
-        <activity android:name=".ChatActivity" />
-        <activity android:name=".HistoryActivity"></activity>
     </application>
 
 </manifest>

@@ -5,6 +5,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -14,6 +16,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.example.thu.fragments.BookFragment;
+import com.example.thu.fragments.ChatFragment;
+import com.example.thu.fragments.HistoryFragment;
+import com.example.thu.utils.BookHistory;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -26,11 +33,10 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setVisibility(View.GONE);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
-                startActivity(intent);
 
 //                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
 //                        .setAction("Action", null).show();
@@ -87,14 +93,12 @@ public class MainActivity extends AppCompatActivity
         Intent intent = null;
 
         if (id == R.id.nav_taxi) {
-            intent = new Intent(MainActivity.this, BookActivity.class);
-            startActivity(intent);
+            loadFragment(BookFragment.class);
         } else if (id == R.id.nav_support) {
-            intent = new Intent(MainActivity.this, ChatActivity.class);
-            startActivity(intent);
+            loadFragment(ChatFragment.class);
         } else if (id == R.id.nav_history) {
-            intent = new Intent(MainActivity.this, HistoryActivity.class);
-            startActivity(intent);
+            loadFragment(HistoryFragment.class);
+
         } else if (id == R.id.nav_promotion) {
             new AlertDialog.Builder(MainActivity.this)
             .setTitle("Thông tin khuyến mãi")
@@ -108,8 +112,7 @@ public class MainActivity extends AppCompatActivity
             }).create().show();
 
         } else if (id == R.id.nav_user_info) {
-//            intent = new Intent(MainActivity.this, HistoryActivity.class);
-//            startActivity(intent);
+
         } else if (id == R.id.nav_logout) {
 
         }
@@ -117,5 +120,18 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void loadFragment(Class classObject) {
+        Fragment fragment = null;
+        Class fragmentClass = classObject;
+
+        try {
+            fragment = (Fragment) fragmentClass.newInstance();
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.beginTransaction().replace(R.id.flContent, fragment).commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
