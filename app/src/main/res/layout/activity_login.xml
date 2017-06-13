@@ -33,6 +33,7 @@
             android:text="Bạn chưa có tài khoản?"
             />
         <Button
+            android:id="@+id/btnRegister"
             android:layout_width="100dp"
             android:layout_height="50dp"
             android:background="#00ffffff"
@@ -64,6 +65,7 @@
             >
 
             <EditText
+                android:id="@+id/etUsername"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/username"
@@ -84,6 +86,7 @@
             android:textColorHint="@color/colorWhite">
 
             <EditText
+                android:id="@+id/etPassword"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/colorWhite"

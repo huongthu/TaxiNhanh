@@ -16,4 +16,22 @@
     <string name="write_a_message">Nhập tin nhắn...</string>
     <string name="lng_pickUp">Điểm đi:</string>
     <string name="lng_dropOff">Điểm đến:</string>
+    <string name="auth_failed">Vui lòng kiểm tra lại thông tin đăng nhập</string>
+    <string name="auth_success">Đăng nhập thành công</string>
+
+    <string name="socket_url">http://thesishcmus-huongthu.c9users.io:8080</string>
+    <string name="DRIVER_JOIN">DRIVER_JOINS</string>
+    <string name="DRIVER_REQUESTION">DRIVER_REQUESTION</string>
+    <string name="DRIVER_REQUESTION_RESULT">DRIVER_REQUESTION_RESULT</string>
+
+    <string name="where_you_go">Bạn đi đâu</string>
+    <string name="register">ĐĂNG KÝ</string>
+    <string name="full_name">HỌ TÊN</string>
+    <string name="email">E-mail</string>
+
+    <string name="register_successful">Đăng ký thành công</string>
+    <string name="register_failed">Có lỗi xảy ra, vui lòng thử lại sau</string>
+    <string name="password_not_match">Nhập lại mật khẩu không chính xác, vui lòng thử lại</string>
+    <string name="plz_provide_email_or_password">Vui lòng nhập Email và Mật khẩu</string>
+    <string name="plz_provide_full_register_info">Vui lòng cung cấp đủ thông tin đăng ký</string>
 </resources>

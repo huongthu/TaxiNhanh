@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -16,19 +17,34 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 import com.example.thu.fragments.BookFragment;
 import com.example.thu.fragments.ChatFragment;
 import com.example.thu.fragments.HistoryFragment;
 import com.example.thu.utils.BookHistory;
+import com.google.android.gms.vision.text.Text;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+    private FirebaseAuth mAuth;
+    private FirebaseAuth.AuthStateListener mAuthListener;
+
+    private Class currentClass = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        loginHandle();
+
+        if (!isLogin()) {
+            return;
+        }
+
         setContentView(R.layout.activity_main);
+        loadFragment(BookFragment.class);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -114,7 +130,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_user_info) {
 
         } else if (id == R.id.nav_logout) {
-
+            doSignOut();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -126,12 +142,72 @@ public class MainActivity extends AppCompatActivity
         Fragment fragment = null;
         Class fragmentClass = classObject;
 
+        if (classObject == currentClass) {
+            return;
+        }
+
         try {
             fragment = (Fragment) fragmentClass.newInstance();
             FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.beginTransaction().replace(R.id.flContent, fragment).commit();
+            currentClass = classObject;
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private boolean isLogin() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private void doSignOut() {
+        if (null != FirebaseAuth.getInstance().getCurrentUser()) {
+            FirebaseAuth.getInstance().signOut();
+            MainActivity.this.finish();
+        }
+    }
+
+    private void loginHandle() {
+        mAuth = FirebaseAuth.getInstance();
+
+        mAuthListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user != null) {
+                    // User is signed in
+                    // Update user into to navigation
+                    NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+                    navigationView.setNavigationItemSelectedListener(MainActivity.this);
+                    View header =navigationView.getHeaderView(0);
+
+                    TextView tvFullName = (TextView) header.findViewById(R.id.tvHeaderMainName);
+                    TextView tvEmail = (TextView) header.findViewById(R.id.tvHeaderMainEmail);
+                    tvFullName.setText(user.getDisplayName());
+                    tvEmail.setText(user.getEmail());
+
+                } else {
+                    // User is signed out
+                    // show Login Activity
+                    Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                    startActivity(intent);
+                    MainActivity.this.finish();
+                }
+            }
+        };
+        mAuth.addAuthStateListener(mAuthListener);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (mAuthListener != null) {
+            mAuth.removeAuthStateListener(mAuthListener);
         }
     }
 }
