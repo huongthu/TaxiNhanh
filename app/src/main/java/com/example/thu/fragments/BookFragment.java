@@ -3,6 +3,7 @@ package com.example.thu.fragments;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.location.Address;
@@ -20,6 +21,10 @@ import android.widget.Toast;
 
 import com.example.thu.taxinhanh.MapsActivity;
 import com.example.thu.taxinhanh.R;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -37,6 +42,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+import static android.app.Activity.RESULT_CANCELED;
+import static android.app.Activity.RESULT_OK;
+
 /**
  * Created by thu on 6/12/2017.
  * Guide at http://manishkpr.webheavens.com/android-navigation-drawer-example-using-fragments/
@@ -44,6 +52,7 @@ import java.util.Locale;
 
 public class BookFragment extends Fragment implements OnMapReadyCallback {
     private boolean isBookAvailable = false;
+    int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
 
     private GoogleMap mMap;
     MapView mMapView;
@@ -61,6 +70,22 @@ public class BookFragment extends Fragment implements OnMapReadyCallback {
         final TextView tvDropOff = (TextView) root.findViewById(R.id.tvDropOff);
         tvPickUp.setSelected(true);
         tvDropOff.setSelected(true);
+
+        tvDropOff.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    Intent intent =
+                            new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
+                                    .build(getActivity());
+                    startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
+                } catch (GooglePlayServicesRepairableException e) {
+                    // TODO: Handle the error.
+                } catch (GooglePlayServicesNotAvailableException e) {
+                    // TODO: Handle the error.
+                }
+            }
+        });
 
         ImageButton btnClearPickUp = (ImageButton) root.findViewById(R.id.btnClearDropOff);
         btnClearPickUp.setOnClickListener(new View.OnClickListener() {
@@ -106,14 +131,12 @@ public class BookFragment extends Fragment implements OnMapReadyCallback {
 
                 // For showing a move to my location button
                 if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
                     return;
                 }
                 mMap.setMyLocationEnabled(true);
 
                 TextView tvPickUp = (TextView) root.findViewById(R.id.tvPickUp);
                 tvPickUp.setText(getAddress(10.7622739,106.6822471));
-
 
                 // For dropping a marker at a point on the Map
                 LatLng sydney = new LatLng(10.7622739,106.6822471);
@@ -129,12 +152,30 @@ public class BookFragment extends Fragment implements OnMapReadyCallback {
         return root;
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        TextView tvDropOff = (TextView) getActivity().findViewById(R.id.tvDropOff);
+
+        if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                Place place = PlaceAutocomplete.getPlace(getActivity(), data);
+                tvDropOff.setText(place.getAddress());
+            } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+                tvDropOff.setText(getResources().getText(R.string.please_choose_dropoff));
+                tvDropOff.setTypeface(null, Typeface.ITALIC);
+            } else if (resultCode == RESULT_CANCELED) {
+                // The user canceled the operation.
+                // Do nothing
+            }
+        }
+    }
+
     public String getAddress(double lat, double lng) {
         Geocoder geocoder = new Geocoder(getContext(), Locale.getDefault());
         try {
             List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
             Address obj = addresses.get(0);
-            String add = obj.getAddressLine(0) +  ", " + obj.getSubAdminArea();
+            String add = obj.getAddressLine(0) +  ", " + obj.getAddressLine(2) +  ", " + obj.getAddressLine(3);
             return add;
             // TennisAppActivity.showDialog(add);
         } catch (IOException e) {

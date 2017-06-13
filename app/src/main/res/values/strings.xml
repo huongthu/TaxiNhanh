@@ -35,4 +35,5 @@
     <string name="plz_provide_email_or_password">Vui lòng nhập Email và Mật khẩu</string>
     <string name="plz_provide_full_register_info">Vui lòng cung cấp đủ thông tin đăng ký</string>
     <string name="title_activity_maps">Map</string>
+    <string name="current_place">Địa điểm của bạn</string>
 </resources>
