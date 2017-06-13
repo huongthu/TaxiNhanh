@@ -1,10 +1,14 @@
 package com.example.thu.taxinhanh;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -17,12 +21,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.thu.fragments.BookFragment;
 import com.example.thu.fragments.ChatFragment;
 import com.example.thu.fragments.HistoryFragment;
 import com.example.thu.utils.BookHistory;
+import com.example.thu.utils.Utils;
 import com.google.android.gms.vision.text.Text;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -31,6 +38,8 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
+
+    private ProgressDialog mProgressDialog;
 
     private Class currentClass = null;
 
@@ -44,7 +53,6 @@ public class MainActivity extends AppCompatActivity
         }
 
         setContentView(R.layout.activity_main);
-        loadFragment(BookFragment.class);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -67,6 +75,8 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        loadFragment(BookFragment.class);
     }
 
     @Override
@@ -116,17 +126,7 @@ public class MainActivity extends AppCompatActivity
             loadFragment(HistoryFragment.class);
 
         } else if (id == R.id.nav_promotion) {
-            new AlertDialog.Builder(MainActivity.this)
-            .setTitle("Thông tin khuyến mãi")
-            .setMessage("Are you sure you want to exit? Are you sure you want to exit? Are you sure you want to exit? Are you sure you want to exit? Are you sure you want to exit? Are you sure you want to exit? Are you sure you want to exit? Are you sure you want to exit?Are you sure you want to exit? Are you sure you want to exit? Are you sure you want to exit? Are you sure you want to exit? Are you sure you want to exit? Are you sure you want to exit? Are you sure you want to exit? Are you sure you want to exit?")
-            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which)
-                {
-                    dialog.cancel();
-                }
-            }).create().show();
-
+            new GetContentFromUrl().execute(getResources().getString(R.string.url_nofitication));
         } else if (id == R.id.nav_user_info) {
 
         } else if (id == R.id.nav_logout) {
@@ -136,6 +136,45 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private class GetContentFromUrl extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            return Utils.getContentFromUrl(params[0]);
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            ((LinearLayout)findViewById(R.id.llLoading)).setVisibility(View.GONE);
+            //https://stackoverflow.com/questions/17939760/how-to-solve-android-os-networkonmainthreadexception-in-json
+            if (android.os.Build.VERSION.SDK_INT > 9) {
+                StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                        .permitAll().build();
+
+                StrictMode.setThreadPolicy(policy);
+            }
+
+            new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Thông tin khuyến mãi")
+                    .setMessage(result)
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which)
+                        {
+                            dialog.cancel();
+                        }
+                    }).create().show();
+        }
+
+        @Override
+        protected void onPreExecute() {
+            ((LinearLayout)findViewById(R.id.llLoading)).setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) { }
     }
 
     private void loadFragment(Class classObject) {
