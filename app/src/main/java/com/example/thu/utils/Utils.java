@@ -77,4 +77,8 @@ public class Utils {
 
         return x > pX;
     }
+
+    public static double cos(double a1, double b1, double a2, double b2) {
+        return (a1*b1 + a2*b2) / ((Math.sqrt(a1*a1 + a2*a2)) * (Math.sqrt(b1*b1 + b2*b2)));
+    }
 }

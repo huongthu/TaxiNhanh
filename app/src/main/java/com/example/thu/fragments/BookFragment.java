@@ -13,6 +13,7 @@ import android.graphics.Point;
 import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -244,13 +245,29 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                                 try {
 
                                     Marker vehicle = findVehicleMarker(objUpdate.getString("licensePlate"));
+                                    LatLng newLocation = new LatLng(objUpdate.getDouble("lat"),objUpdate.getDouble("lng"));
+                                    LatLng oldLocation = new LatLng(objUpdate.getDouble("latOld"),objUpdate.getDouble("lngOld"));
+
+                                    String licensePlate = objUpdate.getString("licensePlate");
                                     if (null == vehicle) {
                                         lstVehicles.add(mMap.addMarker(new MarkerOptions()
                                                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.car))
-                                                .title(objUpdate.getString("licensePlate"))
-                                                .position(new LatLng(objUpdate.getDouble("lat"),objUpdate.getDouble("lng")))));
+                                                .title(licensePlate)
+                                                .position(newLocation)));
                                     } else {
-                                        MarkerAnimation.animateMarkerToICS(vehicle, new LatLng(objUpdate.getDouble("lat"),objUpdate.getDouble("lng")), new LatLngInterpolator.Spherical());
+                                        Location prevLoc = new Location("");
+                                        prevLoc.setLatitude(oldLocation.latitude);
+                                        prevLoc.setLongitude(oldLocation.longitude);
+
+                                        Location nextLoc = new Location("");
+                                        nextLoc.setLatitude(newLocation.latitude);
+                                        nextLoc.setLongitude(newLocation.longitude);
+
+                                        float bearing = prevLoc.bearingTo(nextLoc) ;
+
+
+                                        vehicle.setRotation(bearing);
+                                        MarkerAnimation.animateMarkerToICS(vehicle, newLocation, new LatLngInterpolator.Spherical());
                                         //vehicle.setPosition();
 
                                     }
