@@ -19,7 +19,8 @@
     <string name="auth_failed">Vui lòng kiểm tra lại thông tin đăng nhập</string>
     <string name="auth_success">Đăng nhập thành công</string>
 
-    <string name="socket_url">http://thesishcmus-huongthu.c9users.io:8080</string>
+    <string name="socket_url">http://thesisk13.ddns.net:3000</string>
+    <string name="socket_chat_url">http://thesisk13.ddns.net:3001</string>
     <string name="DRIVER_JOIN">DRIVER_JOINS</string>
     <string name="DRIVER_REQUESTION">DRIVER_REQUESTION</string>
     <string name="DRIVER_REQUESTION_RESULT">DRIVER_REQUESTION_RESULT</string>
@@ -37,4 +38,7 @@
     <string name="title_activity_maps">Map</string>
     <string name="current_place">Địa điểm của bạn</string>
     <string name="url_nofitication">http://thesishcmus-huongthu.c9users.io:8080/nofitications/customers</string>
+    <string name="JOIN_CHAT">JOIN_CHAT</string>
+    <string name="MESSAGE">MESSAGE</string>
+    <string name="go_to_queue_zone">Đặt xe thành công, vui lòng đi đến địa điểm xếp hàng</string>
 </resources>

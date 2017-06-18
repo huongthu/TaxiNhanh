@@ -24,15 +24,26 @@ import android.view.MenuItem;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.thu.fragments.BookFragment;
 import com.example.thu.fragments.ChatFragment;
 import com.example.thu.fragments.HistoryFragment;
 import com.example.thu.utils.BookHistory;
 import com.example.thu.utils.Utils;
+import com.github.nkzawa.emitter.Emitter;
+import com.github.nkzawa.socketio.client.IO;
+import com.github.nkzawa.socketio.client.Socket;
 import com.google.android.gms.vision.text.Text;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.net.URISyntaxException;
+import com.github.nkzawa.emitter.Emitter;
+
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -43,6 +54,13 @@ public class MainActivity extends AppCompatActivity
 
     private Class currentClass = null;
 
+    private Socket mSocket;
+    {
+        try {
+            mSocket = IO.socket("http://thesisk13.ddns.net:3001/");
+        } catch (URISyntaxException e) {}
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,6 +69,9 @@ public class MainActivity extends AppCompatActivity
         if (!isLogin()) {
             return;
         }
+
+        mSocket.connect();
+        mSocket.on("MESSAGE", onNewMessage);
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -249,4 +270,18 @@ public class MainActivity extends AppCompatActivity
             mAuth.removeAuthStateListener(mAuthListener);
         }
     }
+
+    private Emitter.Listener onNewMessage = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+                    // add the message to view
+                    //addMessage(username, message);
+                }
+            });
+        }
+    };
 }

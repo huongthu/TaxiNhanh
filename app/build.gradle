@@ -27,10 +27,16 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile 'com.google.maps.android:android-maps-utils:0.4'
     compile 'com.google.android.gms:play-services-maps:10.2.6'
     compile 'com.google.android.gms:play-services:10.2.6'
     compile 'com.google.firebase:firebase-auth:10.2.0'
     compile 'com.google.firebase:firebase-core:10.2.0'
+//    compile ('io.socket:socket.io-client:0.8.3') {
+//        // excluding org.json which is provided by Android
+//        exclude group: 'org.json', module: 'json'
+//    }
+    compile 'com.github.nkzawa:socket.io-client:0.3.0'
     testCompile 'junit:junit:4.12'
 }
 

@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
@@ -33,8 +34,13 @@ import com.example.thu.taxinhanh.R;
 import com.example.thu.utils.DirectionFinder;
 import com.example.thu.utils.DirectionFinderListener;
 import com.example.thu.utils.GPSTracker;
+import com.example.thu.utils.LatLngInterpolator;
+import com.example.thu.utils.MarkerAnimation;
 import com.example.thu.utils.Route;
 import com.example.thu.utils.Utils;
+import com.github.nkzawa.emitter.Emitter;
+import com.github.nkzawa.socketio.client.IO;
+import com.github.nkzawa.socketio.client.Socket;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.Place;
@@ -48,8 +54,11 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -58,6 +67,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -96,6 +106,15 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 
     ViewGroup root = null;
 
+    private Socket mSocket;
+    {
+        try {
+            mSocket = IO.socket("http://thesisk13.ddns.net:3002/");
+        } catch (URISyntaxException e) {}
+    }
+
+    private ArrayList<Marker> lstVehicles = new ArrayList<Marker>();
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         root = (ViewGroup) inflater.inflate(R.layout.activity_book, null);
@@ -133,11 +152,29 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                 //Toast.makeText(getContext(), String.valueOf(mMap.getCameraPosition().tilt),Toast.LENGTH_LONG).show();
 
                 if (isBookAvailable) {
-                    btnBook.setImageResource(R.drawable.book_visible);
-                } else {
-                    btnBook.setImageResource(R.drawable.book_invisible);
+                    new AlertDialog.Builder(getActivity())
+                            .setTitle("Thông tin")
+                            .setMessage(getResources().getString(R.string.go_to_queue_zone))
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which)
+                                {
+                                    dialog.cancel();
+                                }
+                            }).create().show();
+                    isBookAvailable = false;
                 }
-                isBookAvailable = !isBookAvailable;
+
+                btnBook.setImageResource(R.drawable.book_invisible);
+
+//                isBookAvailable = !polylinePaths.isEmpty();
+//                if (isBookAvailable) {
+//                    btnBook.setImageResource(R.drawable.book_visible);
+//
+//                } else {
+//                    btnBook.setImageResource(R.drawable.book_invisible);
+//                }
+                //isBookAvailable = !isBookAvailable;
 
             }
         });
@@ -176,11 +213,83 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                 //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker Title").snippet("Marker Description"));
 
                 // For zooming automatically to the location of the marker
-                CameraPosition cameraPosition = new CameraPosition.Builder().target(sydney).zoom(15).build();
+                CameraPosition cameraPosition = new CameraPosition.Builder().target(sydney).zoom(8).build();
 
-                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+                mMap.addMarker(new MarkerOptions()
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.car))
+                        .title("59A-1234")
+                        .position(new LatLng(10.7622739,106.6822471)));
+
+
+                mSocket.on("INIT_VEHICELS", new Emitter.Listener() {
+                    @Override
+                    public void call(Object... args) {
+                        //JSONObject objVehicles = (JSONObject) args[0];
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getActivity(), "connected", Toast.LENGTH_SHORT);
+                            }
+                        });
+                    }
+                }).on("VEHICLE_UPDATE", new Emitter.Listener() {
+                    @Override
+                    public void call(Object... args) {
+                        final JSONObject objUpdate = (JSONObject) args[0];
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+
+                                    Marker vehicle = findVehicleMarker(objUpdate.getString("licensePlate"));
+                                    if (null == vehicle) {
+                                        lstVehicles.add(mMap.addMarker(new MarkerOptions()
+                                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.car))
+                                                .title(objUpdate.getString("licensePlate"))
+                                                .position(new LatLng(objUpdate.getDouble("lat"),objUpdate.getDouble("lng")))));
+                                    } else {
+                                        MarkerAnimation.animateMarkerToICS(vehicle, new LatLng(objUpdate.getDouble("lat"),objUpdate.getDouble("lng")), new LatLngInterpolator.Spherical());
+                                        //vehicle.setPosition();
+
+                                    }
+
+                                    ;
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+
+                            }
+                        });
+                    }
+                });
+
+                mSocket.connect();
+
+
+//                ArrayList<LatLng> a = new ArrayList<LatLng>();
+//                a.add(new LatLng(10.763001338925134,106.675278721788));
+//                a.add(new LatLng(10.763001338925134,106.69027566331943));
+//                a.add(new LatLng(10.756531587882872,106.69027566331943));
+//                a.add(new LatLng(10.756531587882872,106.675278721788));
+//
+//                LatLng b = new LatLng(10.7622739,106.6822471);
+//                final String res = String.valueOf((Utils.isPointInPolygon(b, a)));
+//
+//                boolean c = com.google.maps.android.PolyUtil.containsLocation(b, a, true);
+//
+//
+//                getActivity().runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        Toast.makeText(getActivity(), res, Toast.LENGTH_SHORT);
+//                    }
+//                });
             }
         });
+
+
 
         return root;
     }
@@ -309,12 +418,42 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 
     @Override
     public void onDirectionFinderStart() {
+        progressDialog = ProgressDialog.show(getActivity(), "Loading...",
+                "Đang lấy thông tin địa điểm..!", true);
 
+        if (originMarkers != null) {
+            for (Marker marker : originMarkers) {
+                marker.remove();
+            }
+        }
+
+        if (destinationMarkers != null) {
+            for (Marker marker : destinationMarkers) {
+                marker.remove();
+            }
+        }
+
+        if (polylinePaths != null) {
+            for (Polyline polyline:polylinePaths ) {
+                polyline.remove();
+            }
+        }
+
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(10));
+    }
+
+    private Marker findVehicleMarker (String licensePlate) {
+        for (int i = 0; i < lstVehicles.size(); i++) {
+            if (lstVehicles.get(i).getTitle().toLowerCase().equals(licensePlate.toLowerCase())) {
+                return lstVehicles.get(i);
+            }
+        }
+        return null;
     }
 
     @Override
     public void onDirectionFinderSuccess(List<Route> routes) {
-        //progressDialog.dismiss();
+        progressDialog.dismiss();
         polylinePaths = new ArrayList<>();
         originMarkers = new ArrayList<>();
         destinationMarkers = new ArrayList<>();
@@ -330,17 +469,15 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
             double money = Double.parseDouble(km[0]);
 
             TextView tvBook = (TextView)getActivity().findViewById(R.id.tvFare);
-            tvBook.setText("Giá cước: " + money * 11000);
+            tvBook.setText("Giá cước dự tính: " + money * 11000);
             //mSocket.emit("CUSTOMER_BOOKS","ahihi");
             //distance = new Distance(route.distance.text,route.distance.value);
-
-            //startAddress = route.startAddress;
-            //endAddress = route.endAddress;
 
             originMarkers.add(mMap.addMarker(new MarkerOptions()
                     //.icon(BitmapDescriptorFactory.fromResource(R.drawable.empty_flag_40))
                     .title(route.startAddress)
                     .position(route.startLocation)));
+
             destinationMarkers.add(mMap.addMarker(new MarkerOptions()
                     //.icon(BitmapDescriptorFactory.fromResource(R.drawable.empty_flag_40))
                     .title(route.endAddress)
@@ -355,6 +492,18 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                 polylineOptions.add(route.points.get(i));
 
             polylinePaths.add(mMap.addPolyline(polylineOptions));
+
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            builder.include(route.startLocation);
+            builder.include(route.endLocation);
+            LatLngBounds bounds = builder.build();
+
+            //mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0));
+
+            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 15));
+
+            isBookAvailable = true;
+            ((ImageButton) root.findViewById(R.id.btnBook)).setImageResource(R.drawable.book_visible);
         }
     }
 }

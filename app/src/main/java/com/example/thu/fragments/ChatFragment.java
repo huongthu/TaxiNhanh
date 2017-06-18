@@ -1,20 +1,37 @@
 package com.example.thu.fragments;
 
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.thu.taxinhanh.R;
 import com.example.thu.utils.Enums;
+import com.github.nkzawa.emitter.Emitter;
+import com.google.firebase.auth.FirebaseAuth;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.net.URISyntaxException;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import com.github.nkzawa.socketio.client.IO;
+import com.github.nkzawa.socketio.client.Socket;
 
 /**
  * Created by thu on 6/12/2017.
@@ -27,8 +44,18 @@ public class ChatFragment extends Fragment {
         return f;
     }
 
+    private Socket mSocket;
+    {
+        try {
+            mSocket = IO.socket("http://thesisk13.ddns.net:3001/");
+        } catch (URISyntaxException e) {}
+    }
+
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
         root = (ViewGroup) inflater.inflate(R.layout.activity_chat, null);
 
         ImageView btnSend = (ImageView)root.findViewById(R.id.btnSend);
@@ -37,10 +64,42 @@ public class ChatFragment extends Fragment {
             public void onClick(View v) {
                 EditText etMessage = (EditText)root.findViewById(R.id.etMessage);
                 addMessage(etMessage.getText().toString(), Enums.MessageType.SELF_MESSAGE);
+
+                JSONObject objData = new JSONObject();
+                try {
+                    objData.put("sender", mAuth.getCurrentUser().getEmail());
+                    objData.put("receiver", null);
+                    objData.put("messageType", 1);
+                    objData.put("message", etMessage.getText());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
                 etMessage.setText("");
+                mSocket.emit("MESSAGE", objData);
             }
         });
 
+
+        //mSocket = IO.socket(getResources().getString(R.string.socket_chat_url));
+        mSocket.connect();
+        mSocket.on("MESSAGE", new Emitter.Listener() {
+            @Override
+            public void call(final Object... args) {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            JSONObject messageObj = (JSONObject)args[0];
+                            addMessage(messageObj.getString("message"), Enums.MessageType.OTHER_MESSAGE);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+        });
+        mSocket.emit("JOIN_CHAT", "huongthu1302@gmail.com");
         return root;
     }
 
