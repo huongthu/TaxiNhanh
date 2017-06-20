@@ -29,6 +29,7 @@ import android.widget.Toast;
 import com.example.thu.fragments.BookFragment;
 import com.example.thu.fragments.ChatFragment;
 import com.example.thu.fragments.HistoryFragment;
+import com.example.thu.fragments.ProfileFragment;
 import com.example.thu.utils.BookHistory;
 import com.example.thu.utils.Utils;
 import com.github.nkzawa.emitter.Emitter;
@@ -149,7 +150,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_promotion) {
             new GetContentFromUrl().execute(getResources().getString(R.string.url_nofitication));
         } else if (id == R.id.nav_user_info) {
-
+            loadFragment(ProfileFragment.class);
         } else if (id == R.id.nav_logout) {
             doSignOut();
         }
@@ -228,6 +229,8 @@ public class MainActivity extends AppCompatActivity
     private void doSignOut() {
         if (null != FirebaseAuth.getInstance().getCurrentUser()) {
             FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(MainActivity.this, MainActivity.class);
+            startActivity(intent);
             MainActivity.this.finish();
         }
     }

@@ -10,4 +10,5 @@
     <color name="colorMsgSelf">#283593</color>
     <color name="colorMsg">#bdbdbd</color>
     <color name="colorGrey">#6b6969</color>
+    <color name="colorRed">#e41313</color>
 </resources>

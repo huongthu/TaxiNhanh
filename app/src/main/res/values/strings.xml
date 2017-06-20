@@ -30,6 +30,7 @@
     <string name="full_name">HỌ TÊN</string>
     <string name="email">E-mail</string>
 
+    <string name="db_child_phone_number">PhoneNumbers</string>
     <string name="register_successful">Đăng ký thành công</string>
     <string name="register_failed">Có lỗi xảy ra, vui lòng thử lại sau</string>
     <string name="password_not_match">Nhập lại mật khẩu không chính xác, vui lòng thử lại</string>
@@ -41,4 +42,7 @@
     <string name="JOIN_CHAT">JOIN_CHAT</string>
     <string name="MESSAGE">MESSAGE</string>
     <string name="go_to_queue_zone">Đặt xe thành công, vui lòng đi đến địa điểm xếp hàng</string>
+    <string name="logout">THOÁT</string>
+    <string name="retrive_data">Đang lấy dữ liệu</string>
+    <string name="update_successful">Cập nhật thông tin thành công</string>
 </resources>

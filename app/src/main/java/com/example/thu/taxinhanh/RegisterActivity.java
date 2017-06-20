@@ -99,7 +99,8 @@ public class RegisterActivity extends AppCompatActivity {
                                         public void onComplete(@NonNull Task<Void> task) {
                                             if (task.isSuccessful()) {
                                                 FirebaseDatabase database = FirebaseDatabase.getInstance();
-                                                DatabaseReference myRef = database.getReference("PhoneNumbers/" + user.getUid());
+                                                DatabaseReference myRef = database.getReference
+                                                        (getResources().getString(R.string.db_child_phone_number) + "/" + user.getUid());
                                                 myRef.setValue(phoneNumber);
 
                                                 runOnUiThread(new Runnable() {

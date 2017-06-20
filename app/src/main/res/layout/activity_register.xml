@@ -144,7 +144,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@color/colorPrimary"
-                android:text="ĐĂNG KÝ"
+                android:text="@string/register"
                 android:textColor="@android:color/white" />
 
         </LinearLayout>

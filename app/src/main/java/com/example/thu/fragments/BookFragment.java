@@ -86,6 +86,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
     int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
 
     private GoogleMap mMap;
+    private GPSTracker gpsTracker;
     MapView mMapView;
 
     private List<Marker> originMarkers = new ArrayList<>();
@@ -164,19 +165,11 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                                 }
                             }).create().show();
                     isBookAvailable = false;
+                    String currentAddress = getAddress(gpsTracker.getLatitude(), gpsTracker.getLongitude());
+                    sendRequest(currentAddress, tvPickUp.getText().toString());
                 }
 
                 btnBook.setImageResource(R.drawable.book_invisible);
-
-//                isBookAvailable = !polylinePaths.isEmpty();
-//                if (isBookAvailable) {
-//                    btnBook.setImageResource(R.drawable.book_visible);
-//
-//                } else {
-//                    btnBook.setImageResource(R.drawable.book_invisible);
-//                }
-                //isBookAvailable = !isBookAvailable;
-
             }
         });
 
@@ -203,7 +196,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                 }
                 mMap.setMyLocationEnabled(true);
 
-                GPSTracker gpsTracker = new GPSTracker(getActivity());
+                gpsTracker = new GPSTracker(getActivity());
 
                 TextView tvPickUp = (TextView) root.findViewById(R.id.tvPickUp);
                 tvPickUp.setText(getAddress(10.7622739,106.6822471));
@@ -214,14 +207,14 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                 //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker Title").snippet("Marker Description"));
 
                 // For zooming automatically to the location of the marker
-                CameraPosition cameraPosition = new CameraPosition.Builder().target(sydney).zoom(8).build();
+                CameraPosition cameraPosition = new CameraPosition.Builder().target(sydney).zoom(15).build();
 
                 mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-                mMap.addMarker(new MarkerOptions()
-                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.car))
-                        .title("59A-1234")
-                        .position(new LatLng(10.7622739,106.6822471)));
+//                mMap.addMarker(new MarkerOptions()
+//                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.car))
+//                        .title("59A-1234")
+//                        .position(new LatLng(10.7622739,106.6822471)));
 
 
                 mSocket.on("INIT_VEHICELS", new Emitter.Listener() {
@@ -362,8 +355,9 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                 Place place = PlaceAutocomplete.getPlace(getActivity(), data);
                 tvDropOff.setText(place.getAddress());
                 TextView tvPickUp = (TextView) getActivity().findViewById(R.id.tvPickUp);
-
+                isBookAvailable = true;
                 sendRequest(tvPickUp.getText().toString(), place.getAddress().toString());
+                //isBookAvailable = false;
 
             } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
                 tvDropOff.setText(getResources().getText(R.string.please_choose_dropoff));
@@ -477,18 +471,13 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 
         for (Route route : routes) {
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, 16));
-            //tvDuration.setText(route.duration.text);
-            //tvDistance.setText(route.distance.text);
 
             //distance = route.distance.text;
             String[] km = route.distance.text.split(" ");
 
-            double money = Double.parseDouble(km[0]);
+            double distance = Double.parseDouble(km[0]);
+            updatePriceUI(distance);
 
-            TextView tvBook = (TextView)getActivity().findViewById(R.id.tvFare);
-            tvBook.setText("Giá cước dự tính: " + money * 11000);
-            //mSocket.emit("CUSTOMER_BOOKS","ahihi");
-            //distance = new Distance(route.distance.text,route.distance.value);
 
             originMarkers.add(mMap.addMarker(new MarkerOptions()
                     //.icon(BitmapDescriptorFactory.fromResource(R.drawable.empty_flag_40))
@@ -503,7 +492,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
             PolylineOptions polylineOptions = new PolylineOptions().
                     geodesic(true).
                     color(Color.BLUE).
-                    width(10);
+                    width(6);
 
             for (int i = 0; i < route.points.size(); i++)
                 polylineOptions.add(route.points.get(i));
@@ -518,9 +507,18 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
             //mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0));
 
             mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 15));
+        }
+    }
 
-            isBookAvailable = true;
-            ((ImageButton) root.findViewById(R.id.btnBook)).setImageResource(R.drawable.book_visible);
+    public void updatePriceUI(double distance) {
+        if (isBookAvailable) {
+            ((ImageButton) getActivity().findViewById(R.id.btnBook)).setImageResource(R.drawable.book_visible);
+            getActivity().findViewById(R.id.tiPrice).setVisibility(View.VISIBLE);
+            TextView tvBook = (TextView)getActivity().findViewById(R.id.tvFare);
+            tvBook.setText("Giá cước dự tính: " + String.format("%,.0f VNĐ", distance * 11000));
+            //((ImageButton) root.findViewById(R.id.btnBook)).setImageResource(R.drawable.book_visible);
+        } else {
+            //((ImageButton) getActivity().findViewById(R.id.btnBook)).setImageResource(R.drawable.book_invisible);
         }
     }
 }
