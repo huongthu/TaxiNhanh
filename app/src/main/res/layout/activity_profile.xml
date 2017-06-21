@@ -40,20 +40,21 @@
                 android:textSize="20sp"
                 android:layout_marginTop="8dp"
                 android:text="@string/full_name"/>
+
             <android.support.design.widget.TextInputLayout
                 android:layout_marginLeft="10dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:shadowRadius="10">
+                android:shadowRadius="10"
+                android:imeOptions="actionDone">
                 <EditText
-                    android:imeOptions="actionDone"
-                    android:focusable="true"
+                    android:id="@+id/etFullName"
+                    style="@style/Widget.AppCompat.EditText"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:textSize="17sp"
-                    android:textColor="@color/colorBlack"
-                    android:id="@+id/etFullName"/>
-
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:inputType="textPersonName"
+                    android:padding="15dp" />
             </android.support.design.widget.TextInputLayout>
         </LinearLayout>
 
@@ -74,16 +75,18 @@
                 android:layout_marginLeft="10dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:imeOptions="actionDone"
                 android:shadowRadius="10">
                 <EditText
-                    android:imeOptions="actionDone"
-                    android:text="@string/retrive_data"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:textSize="17sp"
+                    android:id="@+id/etPhoneNumber"
                     android:textStyle="italic"
-                    android:textColor="@color/colorBlack"
-                    android:id="@+id/etPhoneNumber"/>
+                    style="@style/Widget.AppCompat.EditText"
+                    android:layout_width="match_parent"
+                    android:text="@string/retrive_data"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:inputType="phone"
+                    android:padding="15dp" />
             </android.support.design.widget.TextInputLayout>
         </LinearLayout>
 

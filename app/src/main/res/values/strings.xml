@@ -45,4 +45,5 @@
     <string name="logout">THOÁT</string>
     <string name="retrive_data">Đang lấy dữ liệu</string>
     <string name="update_successful">Cập nhật thông tin thành công</string>
+    <string name="updating_data">Đang cập nhật thông tin</string>
 </resources>

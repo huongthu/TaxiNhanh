@@ -1,5 +1,6 @@
 package com.example.thu.fragments;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
@@ -38,9 +39,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 /**
  * Created by thu on 6/19/2017.
  */
@@ -49,6 +47,7 @@ public class ProfileFragment extends Fragment {
     private FirebaseAuth mAuth = FirebaseAuth.getInstance();;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private DatabaseReference mDatabase;
+    private ProgressDialog progressDialog;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -79,27 +78,8 @@ public class ProfileFragment extends Fragment {
             return root;
         }
 
-        etFullName.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_SEARCH ||
-                        actionId == EditorInfo.IME_ACTION_DONE ||
-                        event.getAction() == KeyEvent.ACTION_DOWN &&
-                                event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
-                    if (!event.isShiftPressed()) {
-                        final EditText etFullName = (EditText) getActivity().findViewById(R.id.etFullName);
-                        final EditText etPhone = (EditText) getActivity().findViewById(R.id.etPhoneNumber);
-                        updateUserInformation(etFullName.getText().toString(), etPhone.getText().toString());
-
-                        return true; // consume.
-                    }
-                }
-                return false;
-            }
-        });
+        etFullName.setOnEditorActionListener(updateUserInformationListener);
         etPhone.setOnEditorActionListener(updateUserInformationListener);
-
-        etPhone.setOnFocusChangeListener(finishEditting);
 
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -136,36 +116,33 @@ public class ProfileFragment extends Fragment {
     private TextView.OnEditorActionListener updateUserInformationListener = new TextView.OnEditorActionListener() {
         @Override
         public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
-                    actionId == EditorInfo.IME_ACTION_DONE ||
-                    event.getAction() == KeyEvent.ACTION_DOWN &&
-                            event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
-                if (!event.isShiftPressed()) {
-                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.toggleSoftInput (InputMethodManager.SHOW_FORCED, InputMethodManager.RESULT_HIDDEN);
-                    imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
+                InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.toggleSoftInput (InputMethodManager.SHOW_FORCED, InputMethodManager.RESULT_HIDDEN);
+                imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
 
-                    final EditText etFullName = (EditText) getActivity().findViewById(R.id.etFullName);
-                    final EditText etPhone = (EditText) getActivity().findViewById(R.id.etPhoneNumber);
-                    updateUserInformation(etFullName.getText().toString(), etPhone.getText().toString());
+                final EditText etFullName = (EditText) getActivity().findViewById(R.id.etFullName);
+                final EditText etPhone = (EditText) getActivity().findViewById(R.id.etPhoneNumber);
 
-                    return true; // consume.
-                }
+                updateUserInformation(etFullName.getText().toString(), etPhone.getText().toString());
+
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getActivity(), getResources().getString(R.string.updating_data), Toast.LENGTH_SHORT);
+                    }
+                });
+
+                return true; // consume.
             }
             return false;
         }
     };
 
-    private View.OnFocusChangeListener finishEditting = new View.OnFocusChangeListener() {
-        @Override
-        public void onFocusChange(View v, boolean hasFocus) {
-            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.toggleSoftInput (InputMethodManager.SHOW_FORCED, InputMethodManager.RESULT_HIDDEN);
-            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-        }
-    };
-
     private void updateUserInformation(String fullName, final String phoneNumber) {
+        progressDialog = ProgressDialog.show(getActivity(), "",
+                "Đang cập nhật thông tin...", true);
+
         final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
@@ -186,6 +163,16 @@ public class ProfileFragment extends Fragment {
                                 @Override
                                 public void run() {
                                     Toast.makeText(getActivity(), getResources().getText(R.string.update_successful),Toast.LENGTH_LONG).show();
+
+                                    NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view);
+                                    View header =navigationView.getHeaderView(0);
+
+                                    TextView tvFullName = (TextView) header.findViewById(R.id.tvHeaderMainName);
+                                    TextView tvEmail = (TextView) header.findViewById(R.id.tvHeaderMainEmail);
+                                    tvFullName.setText(user.getDisplayName());
+                                    tvEmail.setText(user.getEmail());
+
+                                    progressDialog.dismiss();
                                 }
                             });
                         }
