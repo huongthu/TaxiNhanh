@@ -72,7 +72,6 @@ public class MainActivity extends AppCompatActivity
         }
 
         mSocket.connect();
-        mSocket.on("MESSAGE", onNewMessage);
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -273,18 +272,4 @@ public class MainActivity extends AppCompatActivity
             mAuth.removeAuthStateListener(mAuthListener);
         }
     }
-
-    private Emitter.Listener onNewMessage = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-
-                    // add the message to view
-                    //addMessage(username, message);
-                }
-            });
-        }
-    };
 }

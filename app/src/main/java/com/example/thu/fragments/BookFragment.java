@@ -86,7 +86,6 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
     int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
 
     private GoogleMap mMap;
-    private GPSTracker gpsTracker;
     MapView mMapView;
 
     private List<Marker> originMarkers = new ArrayList<>();
@@ -108,6 +107,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 
     ViewGroup root = null;
     Marker mMarker = null;
+    LatLng currentLocation = null;
 
     private Socket mSocket;
     {
@@ -116,18 +116,46 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
         } catch (URISyntaxException e) {}
     }
 
+    public LatLng pickUpLocation = new LatLng(10.7622739,106.6822471);
+
+    private class GetAddressSync extends AsyncTask<LatLng, Void, String> {
+
+        @Override
+        protected String doInBackground(LatLng... params) {
+            return getAddress(params[0].latitude, params[0].longitude);
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            ((LinearLayout)root.findViewById(R.id.llLoading)).setVisibility(View.GONE);
+
+            TextView tvPickUp = (TextView) root.findViewById(R.id.tvPickUp);
+            tvPickUp.setText(result);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            ((LinearLayout)root.findViewById(R.id.llLoading)).setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) { }
+    }
+
     //https://stackoverflow.com/questions/13756261/how-to-get-the-current-location-in-google-maps-android-api-v2
     private GoogleMap.OnMyLocationChangeListener myLocationChangeListener = new GoogleMap.OnMyLocationChangeListener() {
         @Override
         public void onMyLocationChange(final Location location) {
             LatLng loc = new LatLng(location.getLatitude(), location.getLongitude());
+            currentLocation = loc;
             if (mMarker != null) {
                 mMarker.remove();
             }
 
             mMarker = mMap.addMarker(new MarkerOptions().position(loc));
             if(mMap != null){
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 15.0f));
+                //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 15.0f));
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc, 15.0f));
             }
 
                 ArrayList<LatLng> a = new ArrayList<LatLng>();
@@ -158,6 +186,19 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
         final TextView tvDropOff = (TextView) root.findViewById(R.id.tvDropOff);
         tvPickUp.setSelected(true);
         tvDropOff.setSelected(true);
+
+        Button btnPickUp = (Button) root.findViewById(R.id.btnPickUp);
+        btnPickUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        new GetAddressSync().execute(pickUpLocation);
+                    }
+                });
+            }
+        });
 
         Button btnDropOff = (Button) root.findViewById(R.id.btnDropOff);
 
@@ -198,7 +239,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                                 }
                             }).create().show();
                     isBookAvailable = false;
-                    String currentAddress = getAddress(gpsTracker.getLatitude(), gpsTracker.getLongitude());
+                    String currentAddress = getAddress(currentLocation.latitude, currentLocation.longitude);
                     sendRequest(currentAddress, tvPickUp.getText().toString());
                 }
 
@@ -232,7 +273,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                 //gpsTracker = new GPSTracker(getActivity());
 
                 TextView tvPickUp = (TextView) root.findViewById(R.id.tvPickUp);
-                tvPickUp.setText(getAddress(10.7622739,106.6822471));
+                tvPickUp.setText(getAddress(pickUpLocation.latitude, pickUpLocation.longitude));
                 //tvPickUp.setText(getAddress(gpsTracker.getLatitude(),gpsTracker.getLongitude()));
 
                 // For dropping a marker at a point on the Map
@@ -423,8 +464,8 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-            Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-            return "NOT FOUND";
+            //Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+            return "Không tìm thấy vị trí, bấm để thử lại";
         }
     }
 
