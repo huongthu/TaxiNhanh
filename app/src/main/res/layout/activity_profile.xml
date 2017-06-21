@@ -79,10 +79,8 @@
                 android:shadowRadius="10">
                 <EditText
                     android:id="@+id/etPhoneNumber"
-                    android:textStyle="italic"
                     style="@style/Widget.AppCompat.EditText"
                     android:layout_width="match_parent"
-                    android:text="@string/retrive_data"
                     android:layout_height="wrap_content"
                     android:ems="10"
                     android:inputType="phone"

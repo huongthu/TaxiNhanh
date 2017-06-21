@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
-import android.text.Editable;
 import android.text.method.KeyListener;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -18,16 +17,11 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.thu.taxinhanh.LoginActivity;
 import com.example.thu.taxinhanh.MainActivity;
 import com.example.thu.taxinhanh.R;
-import com.example.thu.taxinhanh.RegisterActivity;
-import com.example.thu.utils.Enums;
-import com.github.nkzawa.emitter.Emitter;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -84,28 +78,33 @@ public class ProfileFragment extends Fragment {
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                progressDialog = ProgressDialog.show(getActivity(), "",
+                        getResources().getString(R.string.retrive_data), true);
+
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
-                    etFullName.setText(mAuth.getCurrentUser().getDisplayName());
-                    etEmail.setText(mAuth.getCurrentUser().getEmail());
-
                     mDatabase = FirebaseDatabase.getInstance().getReference();
                     mDatabase.child(getResources().getString(R.string.db_child_phone_number)).child(user.getUid())
                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
                                     String phoneNumber = (String)dataSnapshot.getValue();
+                                    etFullName.setText(mAuth.getCurrentUser().getDisplayName());
+                                    etEmail.setText(mAuth.getCurrentUser().getEmail());
+
                                     etPhone.setText(phoneNumber);
                                     etPhone.setTypeface(null, Typeface.NORMAL);
                                     etPhone.setKeyListener(phoneListener);
+                                    progressDialog.dismiss();
                                 }
 
                                 @Override
                                 public void onCancelled(DatabaseError databaseError) {
-
+                                    progressDialog.dismiss();
                                 }
                             });
                 }
+
             }
         };
         mAuth.addAuthStateListener(mAuthListener);
@@ -141,7 +140,7 @@ public class ProfileFragment extends Fragment {
 
     private void updateUserInformation(String fullName, final String phoneNumber) {
         progressDialog = ProgressDialog.show(getActivity(), "",
-                "Đang cập nhật thông tin...", true);
+                getResources().getString(R.string.updating_data), true);
 
         final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 

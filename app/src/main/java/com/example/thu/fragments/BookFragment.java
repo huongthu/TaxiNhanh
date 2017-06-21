@@ -107,6 +107,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
     }
 
     ViewGroup root = null;
+    Marker mMarker = null;
 
     private Socket mSocket;
     {
@@ -114,6 +115,38 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
             mSocket = IO.socket("http://thesisk13.ddns.net:3002/");
         } catch (URISyntaxException e) {}
     }
+
+    //https://stackoverflow.com/questions/13756261/how-to-get-the-current-location-in-google-maps-android-api-v2
+    private GoogleMap.OnMyLocationChangeListener myLocationChangeListener = new GoogleMap.OnMyLocationChangeListener() {
+        @Override
+        public void onMyLocationChange(final Location location) {
+            LatLng loc = new LatLng(location.getLatitude(), location.getLongitude());
+            if (mMarker != null) {
+                mMarker.remove();
+            }
+
+            mMarker = mMap.addMarker(new MarkerOptions().position(loc));
+            if(mMap != null){
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 15.0f));
+            }
+
+                ArrayList<LatLng> a = new ArrayList<LatLng>();
+                a.add(new LatLng(10.763001338925134,106.675278721788));
+                a.add(new LatLng(10.763001338925134,106.69027566331943));
+                a.add(new LatLng(10.756531587882872,106.69027566331943));
+                a.add(new LatLng(10.756531587882872,106.675278721788));
+
+                LatLng b = new LatLng(location.getLatitude(), location.getLongitude());
+                if (com.google.maps.android.PolyUtil.containsLocation(b, a, true)) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getActivity(), "Vào vùng ahihi", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+        }
+    };
 
     private ArrayList<Marker> lstVehicles = new ArrayList<Marker>();
 
@@ -196,20 +229,22 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                 }
                 mMap.setMyLocationEnabled(true);
 
-                gpsTracker = new GPSTracker(getActivity());
+                //gpsTracker = new GPSTracker(getActivity());
 
                 TextView tvPickUp = (TextView) root.findViewById(R.id.tvPickUp);
                 tvPickUp.setText(getAddress(10.7622739,106.6822471));
                 //tvPickUp.setText(getAddress(gpsTracker.getLatitude(),gpsTracker.getLongitude()));
 
                 // For dropping a marker at a point on the Map
-                LatLng sydney = new LatLng(gpsTracker.getLatitude(),gpsTracker.getLongitude());
+                //LatLng sydney = new LatLng(gpsTracker.getLatitude(),gpsTracker.getLongitude());
                 //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker Title").snippet("Marker Description"));
 
                 // For zooming automatically to the location of the marker
-                CameraPosition cameraPosition = new CameraPosition.Builder().target(sydney).zoom(15).build();
+                //CameraPosition cameraPosition = new CameraPosition.Builder().target(sydney).zoom(15).build();
 
-                mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                //mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                mMap.setOnMyLocationChangeListener(myLocationChangeListener);
+
 
 //                mMap.addMarker(new MarkerOptions()
 //                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.car))
