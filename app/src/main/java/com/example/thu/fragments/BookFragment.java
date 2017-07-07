@@ -62,6 +62,7 @@ import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.firebase.auth.FirebaseAuth;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -108,11 +109,14 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
     ViewGroup root = null;
     Marker mMarker = null;
     LatLng currentLocation = null;
+    private boolean firstCofusGps = false;
+
+    JSONObject objCustomerBook;
 
     private Socket mSocket;
     {
         try {
-            mSocket = IO.socket("http://thesisk13.ddns.net:3002/");
+            mSocket = IO.socket("http://thesisk13.ddns.net:3003/");
         } catch (URISyntaxException e) {}
     }
 
@@ -152,10 +156,11 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                 mMarker.remove();
             }
 
-            mMarker = mMap.addMarker(new MarkerOptions().position(loc));
-            if(mMap != null){
-                //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 15.0f));
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc, 15.0f));
+            //mMarker = mMap.addMarker(new MarkerOptions().position(loc));
+            if ((mMap != null) && (firstCofusGps == false)) {
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 15.0f));
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc, 15.0f));
+                firstCofusGps = true;
             }
 
                 ArrayList<LatLng> a = new ArrayList<LatLng>();
@@ -169,7 +174,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(getActivity(), "Vào vùng ahihi", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(getActivity(), "Vào vùng ahihi", Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
@@ -228,17 +233,20 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                 //Toast.makeText(getContext(), String.valueOf(mMap.getCameraPosition().tilt),Toast.LENGTH_LONG).show();
 
                 if (isBookAvailable) {
-                    new AlertDialog.Builder(getActivity())
-                            .setTitle("Thông tin")
-                            .setMessage(getResources().getString(R.string.go_to_queue_zone))
-                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which)
-                                {
-                                    dialog.cancel();
-                                }
-                            }).create().show();
-                    isBookAvailable = false;
+//                    new AlertDialog.Builder(getActivity())
+//                            .setTitle("Thông tin")
+//                            .setMessage(getResources().getString(R.string.go_to_queue_zone))
+//                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+//                                @Override
+//                                public void onClick(DialogInterface dialog, int which)
+//                                {
+//                                    dialog.cancel();
+//                                }
+//                            }).create().show();
+                    if (objCustomerBook != null) {
+                        mSocket.emit("CUSTOMER_BOOKS", objCustomerBook);
+                    }
+                    //isBookAvailable = false;
                     String currentAddress = getAddress(currentLocation.latitude, currentLocation.longitude);
                     sendRequest(currentAddress, tvPickUp.getText().toString());
                 }
@@ -293,64 +301,97 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 //                        .position(new LatLng(10.7622739,106.6822471)));
 
 
-                mSocket.on("INIT_VEHICELS", new Emitter.Listener() {
+//                mSocket.on("INIT_VEHICELS", new Emitter.Listener() {
+//                    @Override
+//                    public void call(Object... args) {
+//                        //JSONObject objVehicles = (JSONObject) args[0];
+//                        getActivity().runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                Toast.makeText(getActivity(), "connected", Toast.LENGTH_SHORT);
+//                            }
+//                        });
+//                    }
+//                }).on("VEHICLE_UPDATE", new Emitter.Listener() {
+//                    @Override
+//                    public void call(Object... args) {
+//                        final JSONObject objUpdate = (JSONObject) args[0];
+//                        getActivity().runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                try {
+//
+//                                    Marker vehicle = findVehicleMarker(objUpdate.getString("licensePlate"));
+//                                    LatLng newLocation = new LatLng(objUpdate.getDouble("lat"),objUpdate.getDouble("lng"));
+//                                    LatLng oldLocation = new LatLng(objUpdate.getDouble("latOld"),objUpdate.getDouble("lngOld"));
+//
+//                                    String licensePlate = objUpdate.getString("licensePlate");
+//                                    if (null == vehicle) {
+//                                        lstVehicles.add(mMap.addMarker(new MarkerOptions()
+//                                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.car))
+//                                                .title(licensePlate)
+//                                                .position(newLocation)));
+//                                    } else {
+//                                        Location prevLoc = new Location("");
+//                                        prevLoc.setLatitude(oldLocation.latitude);
+//                                        prevLoc.setLongitude(oldLocation.longitude);
+//
+//                                        Location nextLoc = new Location("");
+//                                        nextLoc.setLatitude(newLocation.latitude);
+//                                        nextLoc.setLongitude(newLocation.longitude);
+//
+//                                        float bearing = prevLoc.bearingTo(nextLoc) ;
+//
+//
+//                                        vehicle.setRotation(bearing);
+//                                        MarkerAnimation.animateMarkerToICS(vehicle, newLocation, new LatLngInterpolator.Spherical());
+//                                        //vehicle.setPosition();
+//
+//                                    }
+//
+//                                    ;
+//                                } catch (JSONException e) {
+//                                    e.printStackTrace();
+//                                }
+//
+//                            }
+//                        });
+//                    }
+//                });
+
+                mSocket.on("CUSTOMER_BOOKS_RESULT", new Emitter.Listener() {
                     @Override
                     public void call(Object... args) {
-                        //JSONObject objVehicles = (JSONObject) args[0];
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getActivity(), "connected", Toast.LENGTH_SHORT);
-                            }
-                        });
-                    }
-                }).on("VEHICLE_UPDATE", new Emitter.Listener() {
-                    @Override
-                    public void call(Object... args) {
-                        final JSONObject objUpdate = (JSONObject) args[0];
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
+                        JSONObject obj = (JSONObject) args[0];
+                        try {
+                            final String message = obj.getString("message");
+                            Boolean result = obj.getBoolean("isSuccess");
 
-                                    Marker vehicle = findVehicleMarker(objUpdate.getString("licensePlate"));
-                                    LatLng newLocation = new LatLng(objUpdate.getDouble("lat"),objUpdate.getDouble("lng"));
-                                    LatLng oldLocation = new LatLng(objUpdate.getDouble("latOld"),objUpdate.getDouble("lngOld"));
-
-                                    String licensePlate = objUpdate.getString("licensePlate");
-                                    if (null == vehicle) {
-                                        lstVehicles.add(mMap.addMarker(new MarkerOptions()
-                                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.car))
-                                                .title(licensePlate)
-                                                .position(newLocation)));
-                                    } else {
-                                        Location prevLoc = new Location("");
-                                        prevLoc.setLatitude(oldLocation.latitude);
-                                        prevLoc.setLongitude(oldLocation.longitude);
-
-                                        Location nextLoc = new Location("");
-                                        nextLoc.setLatitude(newLocation.latitude);
-                                        nextLoc.setLongitude(newLocation.longitude);
-
-                                        float bearing = prevLoc.bearingTo(nextLoc) ;
-
-
-                                        vehicle.setRotation(bearing);
-                                        MarkerAnimation.animateMarkerToICS(vehicle, newLocation, new LatLngInterpolator.Spherical());
-                                        //vehicle.setPosition();
-
-                                    }
-
-                                    ;
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    new AlertDialog.Builder(getActivity())
+                                            .setTitle("Thông tin")
+                                            .setMessage(message)
+                                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which)
+                                                {
+                                                    dialog.cancel();
+                                                }
+                                            }).create().show();
                                 }
+                            });
 
-                            }
-                        });
+
+                            isBookAvailable = !result;
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
                     }
                 });
-
                 mSocket.connect();
 
 
@@ -553,6 +594,40 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 
             double distance = Double.parseDouble(km[0]);
             updatePriceUI(distance);
+
+            JSONObject obj = new JSONObject();
+            try {
+                obj.put("distance", String.valueOf(distance) + " km");
+                //obj.put("destination", )
+                JSONObject pickUp = new JSONObject();
+                pickUp.put("lat", pickUpLocation.latitude);
+                pickUp.put("lng", pickUpLocation.longitude);
+
+                JSONObject dropOff = new JSONObject();
+                dropOff.put("lat", route.endLocation.latitude);
+                dropOff.put("lng", route.endLocation.longitude);
+
+                obj.put("pkLatLng", pickUp);
+                obj.put("desLatLng", dropOff);
+                obj.put("customerName", FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
+                obj.put("phone", "0967561458");
+                obj.put("fee", distance * 11000);
+
+                objCustomerBook = obj;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+//                    var data = {
+//                            distance: "2km",
+//                            destination: "Bến thành",
+//                            pkLatLng: {lat: 10.7622739, lng: 106.6822471},
+//                    desLatLng: {lat: 10.8622739, lng: 106.1822471},
+//                    pickUpLocation: "Đại học Khoa học Tự nhiên",
+//                            customerName: "Nguyễn Hương Thu",
+//                            phone: "0967561458",
+//                            fee: 200000
+//}
 
 
             originMarkers.add(mMap.addMarker(new MarkerOptions()
