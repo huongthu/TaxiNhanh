@@ -2,6 +2,7 @@ package com.example.thu.fragments;
 
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -19,6 +20,7 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -110,6 +112,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
     Marker mMarker = null;
     LatLng currentLocation = null;
     private boolean firstCofusGps = false;
+    protected FragmentActivity mActivity;
 
     JSONObject objCustomerBook;
 
@@ -131,7 +134,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 
         @Override
         protected void onPostExecute(String result) {
-            ((LinearLayout)root.findViewById(R.id.llLoading)).setVisibility(View.GONE);
+            (root.findViewById(R.id.llLoading)).setVisibility(View.GONE);
 
             TextView tvPickUp = (TextView) root.findViewById(R.id.tvPickUp);
             tvPickUp.setText(result);
@@ -184,6 +187,15 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
     private ArrayList<Marker> lstVehicles = new ArrayList<Marker>();
 
     @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof Activity){
+            mActivity =(FragmentActivity) context;
+        }
+    }
+
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         root = (ViewGroup) inflater.inflate(R.layout.activity_book, null);
 
@@ -196,7 +208,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
         btnPickUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getActivity().runOnUiThread(new Runnable() {
+                mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         new GetAddressSync().execute(pickUpLocation);
@@ -245,13 +257,10 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 //                            }).create().show();
                     if (objCustomerBook != null) {
                         mSocket.emit("CUSTOMER_BOOKS", objCustomerBook);
+                        (root.findViewById(R.id.llLoading)).setVisibility(View.VISIBLE);
                     }
                     //isBookAvailable = false;
-                    String currentAddress = getAddress(currentLocation.latitude, currentLocation.longitude);
-                    sendRequest(currentAddress, tvPickUp.getText().toString());
                 }
-
-                btnBook.setImageResource(R.drawable.book_invisible);
             }
         });
 
@@ -261,7 +270,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
         mMapView.onResume(); // needed to get the map to display immediately
 
         try {
-            MapsInitializer.initialize(getActivity().getApplicationContext());
+            MapsInitializer.initialize(mActivity.getApplicationContext());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -367,11 +376,12 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                             final String message = obj.getString("message");
                             Boolean result = obj.getBoolean("isSuccess");
 
-                            getActivity().runOnUiThread(new Runnable() {
+                            mActivity.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    new AlertDialog.Builder(getActivity())
-                                            .setTitle("Thông tin")
+                                    (root.findViewById(R.id.llLoading)).setVisibility(View.GONE);
+                                    new AlertDialog.Builder(mActivity)
+                                            .setTitle("Thông báo")
                                             .setMessage(message)
                                             .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                                                 @Override
@@ -380,11 +390,25 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                                                     dialog.cancel();
                                                 }
                                             }).create().show();
+
+
                                 }
                             });
 
 
                             isBookAvailable = !result;
+
+                            if (result) {
+                                mActivity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        TextView tvPickUp = (TextView) root.findViewById(R.id.tvPickUp);
+                                        String currentAddress = getAddress(currentLocation.latitude, currentLocation.longitude);
+                                        sendRequest(currentAddress, tvPickUp.getText().toString());
+                                        btnBook.setImageResource(R.drawable.book_invisible);
+                                    }
+                                });
+                            }
 
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -407,10 +431,10 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 //                boolean c = com.google.maps.android.PolyUtil.containsLocation(b, a, true);
 //
 //
-//                getActivity().runOnUiThread(new Runnable() {
+//                mActivity.runOnUiThread(new Runnable() {
 //                    @Override
 //                    public void run() {
-//                        Toast.makeText(getActivity(), res, Toast.LENGTH_SHORT);
+//                        Toast.makeText(mActivity, res, Toast.LENGTH_SHORT);
 //                    }
 //                });
             }
@@ -428,7 +452,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
             try {
                 Intent intent =
                         new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
-                                .build(getActivity());
+                                .build(mActivity);
                 startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
             } catch (GooglePlayServicesRepairableException e) {
                 // TODO: Handle the error.
@@ -441,20 +465,20 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 
         @Override
         protected void onPostExecute(Void result) {
-            getActivity().runOnUiThread(new Runnable() {
+            mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    ((LinearLayout)getActivity().findViewById(R.id.llLoading)).setVisibility(View.GONE);
+                    ((LinearLayout)mActivity.findViewById(R.id.llLoading)).setVisibility(View.GONE);
                 }
             });
         }
 
         @Override
         protected void onPreExecute() {
-            getActivity().runOnUiThread(new Runnable() {
+            mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    ((LinearLayout)getActivity().findViewById(R.id.llLoading)).setVisibility(View.VISIBLE);
+                    ((LinearLayout)mActivity.findViewById(R.id.llLoading)).setVisibility(View.VISIBLE);
                 }
             });
         }
@@ -465,13 +489,13 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        TextView tvDropOff = (TextView) getActivity().findViewById(R.id.tvDropOff);
+        TextView tvDropOff = (TextView) mActivity.findViewById(R.id.tvDropOff);
 
         if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                Place place = PlaceAutocomplete.getPlace(getActivity(), data);
+                Place place = PlaceAutocomplete.getPlace(mActivity, data);
                 tvDropOff.setText(place.getAddress());
-                TextView tvPickUp = (TextView) getActivity().findViewById(R.id.tvPickUp);
+                TextView tvPickUp = (TextView) mActivity.findViewById(R.id.tvPickUp);
                 isBookAvailable = true;
                 sendRequest(tvPickUp.getText().toString(), place.getAddress().toString());
                 //isBookAvailable = false;
@@ -546,7 +570,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 
     @Override
     public void onDirectionFinderStart() {
-        progressDialog = ProgressDialog.show(getActivity(), "Loading...",
+        progressDialog = ProgressDialog.show(mActivity, "Loading...",
                 "Đang lấy thông tin địa điểm..!", true);
 
         if (originMarkers != null) {
@@ -567,7 +591,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
             }
         }
 
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(10));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(7));
     }
 
     private Marker findVehicleMarker (String licensePlate) {
@@ -577,6 +601,10 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
             }
         }
         return null;
+    }
+
+    private double getPrice(double distance) {
+        return 11000 * distance;
     }
 
     @Override
@@ -595,10 +623,14 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
             double distance = Double.parseDouble(km[0]);
             updatePriceUI(distance);
 
+            TextView tvPickUp = (TextView) root.findViewById(R.id.tvPickUp);
+            TextView tvDropOff = (TextView) root.findViewById(R.id.tvDropOff);
+
             JSONObject obj = new JSONObject();
             try {
                 obj.put("distance", String.valueOf(distance) + " km");
-                //obj.put("destination", )
+                obj.put("pickUpLocation", tvPickUp.getText().toString());
+                obj.put("destination", tvDropOff.getText().toString());
                 JSONObject pickUp = new JSONObject();
                 pickUp.put("lat", pickUpLocation.latitude);
                 pickUp.put("lng", pickUpLocation.longitude);
@@ -611,7 +643,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
                 obj.put("desLatLng", dropOff);
                 obj.put("customerName", FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
                 obj.put("phone", "0967561458");
-                obj.put("fee", distance * 11000);
+                obj.put("fee", getPrice(distance));
 
                 objCustomerBook = obj;
             } catch (JSONException e) {
@@ -643,7 +675,7 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
             PolylineOptions polylineOptions = new PolylineOptions().
                     geodesic(true).
                     color(Color.BLUE).
-                    width(6);
+                    width(10);
 
             for (int i = 0; i < route.points.size(); i++)
                 polylineOptions.add(route.points.get(i));
@@ -657,19 +689,19 @@ public class BookFragment extends Fragment implements OnMapReadyCallback, Direct
 
             //mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0));
 
-            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 15));
+            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 20));
         }
     }
 
     public void updatePriceUI(double distance) {
         if (isBookAvailable) {
-            ((ImageButton) getActivity().findViewById(R.id.btnBook)).setImageResource(R.drawable.book_visible);
-            getActivity().findViewById(R.id.tiPrice).setVisibility(View.VISIBLE);
-            TextView tvBook = (TextView)getActivity().findViewById(R.id.tvFare);
-            tvBook.setText("Giá cước dự tính: " + String.format("%,.0f VNĐ", distance * 11000));
+            ((ImageButton) root.findViewById(R.id.btnBook)).setImageResource(R.drawable.book_visible);
+            mActivity.findViewById(R.id.tiPrice).setVisibility(View.VISIBLE);
+            TextView tvBook = (TextView)mActivity.findViewById(R.id.tvFare);
+            tvBook.setText("Giá cước dự tính: " + String.format("%,.0f VNĐ", getPrice(distance)));
             //((ImageButton) root.findViewById(R.id.btnBook)).setImageResource(R.drawable.book_visible);
         } else {
-            //((ImageButton) getActivity().findViewById(R.id.btnBook)).setImageResource(R.drawable.book_invisible);
+            //((ImageButton) mActivity.findViewById(R.id.btnBook)).setImageResource(R.drawable.book_invisible);
         }
     }
 }

@@ -7,10 +7,6 @@
             android:icon="@drawable/taxi"
             android:title="Đặt xe" />
         <item
-            android:id="@+id/nav_support"
-            android:icon="@drawable/chat"
-            android:title="Hỗ trợ" />
-        <item
             android:id="@+id/nav_history"
             android:icon="@drawable/history"
             android:title="Lịch sử" />

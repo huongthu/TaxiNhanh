@@ -141,9 +141,9 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_taxi) {
             loadFragment(BookFragment.class);
-        } else if (id == R.id.nav_support) {
+        } /*else if (id == R.id.nav_support) {
             loadFragment(ChatFragment.class);
-        } else if (id == R.id.nav_history) {
+        }*/ else if (id == R.id.nav_history) {
             loadFragment(HistoryFragment.class);
 
         } else if (id == R.id.nav_promotion) {
