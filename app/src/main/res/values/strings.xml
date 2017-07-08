@@ -21,6 +21,7 @@
 
     <string name="socket_url">http://thesisk13.ddns.net:3000</string>
     <string name="socket_chat_url">http://thesisk13.ddns.net:3001</string>
+    <string name="register_url">http://thesisk13.ddns.net/users/register</string>
     <string name="DRIVER_JOIN">DRIVER_JOINS</string>
     <string name="DRIVER_REQUESTION">DRIVER_REQUESTION</string>
     <string name="DRIVER_REQUESTION_RESULT">DRIVER_REQUESTION_RESULT</string>
